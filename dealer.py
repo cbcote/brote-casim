@@ -20,4 +20,5 @@ class Dealer:
             self.hand.add_card(deck.deal_card())
 
     def is_hitting(self):
+        """Determine if the dealer should hit or stand"""
         return self.hand.value < 17
