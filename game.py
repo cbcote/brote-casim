@@ -2,36 +2,55 @@ from deck import Deck
 from player import Player
 from dealer import Dealer
 from hand import Hand
-import random
+from strategy.basic_strategy import BasicStrategy
+
+
 
 class BlackjackGame:
-    def __init__(self, player_balance):
+    def __init__(self, player_balance: int, num_decks=6, use_basic_strategy: bool = False) -> None:
         """
         Initialize a Blackjack game with a player and a dealer
         
         Args:
             player_balance (int): The starting balance of the player
+            use_basic_strategy (str): Whether to use basic strategy or not
         
         Attributes:
             deck (Deck): The deck of cards
             player (Player): The player
             dealer (Dealer): The dealer
         """
-        self.deck = Deck()
-        self.player = Player(player_balance)
+        self.deck = Deck(num_decks) # Initialize a deck
+        self.player = Player(player_balance) # Initialize a player with the given balance
         self.dealer = Dealer()
+        self.use_basic_strategy = use_basic_strategy
+        
+        # Initialize basic strategy if needed
+        if self.use_basic_strategy:
+            self.basic_strategy = BasicStrategy()
 
-    def play_round(self):
-        """Play a round of Blackjack"""
-        self.deck = Deck()  # Reinitialize and shuffle deck
+    def play_round(self, bet_amount: int):
+        """
+        Play a round of Blackjack
+        
+        Args:
+            bet_amount (int): The amount to bet on the round
+        """
+        if self.deck.cards_remaining() < 15: # Arbitrary number to trigger reshuffling
+            self.deck = Deck(self.deck.num_decks)  # Reshuffle the deck
+        
         self.player.hand = Hand()
         self.dealer.hand = Hand()
 
-        self.player.place_bet(10)  # For simplicity, bet is fixed here
+        # Place bet
+        self.player.place_bet(bet_amount)
 
         # Initial deal
+        # Deal to player first
         self.player.hand.add_card(self.deck.deal_card())
         self.player.hand.add_card(self.deck.deal_card())
+        
+        # Deal to dealer
         self.dealer.hand.add_card(self.deck.deal_card())
         self.dealer.hand.add_card(self.deck.deal_card())
 
@@ -43,22 +62,30 @@ class BlackjackGame:
             return
 
         while self.player.hand.value < 21:
-            # Prompt player to hit or stand
-            action = input("Hit or Stand? (h/s): ")
-            if action.lower() == 'h':
-                # Player hits
-                self.player.hand.add_card(self.deck.deal_card())
-                # Show cards
-                self.show_some()
-                # Check if player busts
-                if self.player.hand.value > 21:
-                    self.player_busts()
-                    return
+            # Ask player for move
+            if self.use_basic_strategy:
+                # Use basic strategy
+                move = self.basic_strategy.decide_move(self.player.hand, self.dealer.hand.cards[1])
+                print(f"Basic Strategy suggests to {move}")
+
+                if move == 'hit':
+                    # Deal card to player
+                    self.player.hand.add_card(self.deck.deal_card())
+                    self.show_some()
+                    
+                    # Check for player bust
+                    if self.player.hand.value > 21:
+                        self.player_busts()
+                        return
+                else:
+                    break
             else:
+                # Placeholder for player input
                 break
         
         # Dealer's turn
         self.dealer.play(self.deck)
+        
         # Show all cards
         self.show_all()
 
