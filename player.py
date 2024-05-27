@@ -26,16 +26,16 @@ class Player:
         
         Args:
             amount (int): The amount to bet
-        
-        Returns:
-            None
         """
+        if amount > self.balance:
+            raise ValueError("Insufficient balance")
         self.bet = amount
         self.balance -= amount
 
     def win_bet(self):
         """Win the bet and add the winnings to the balance"""
         self.balance += self.bet * 2
+        self.bet = 0
 
     def lose_bet(self):
         """Lose the bet and reset the bet amount to 0"""
